@@ -1,0 +1,39 @@
+import PyPDF2
+import nltk
+import re
+
+# Olumsuz kelimeler listesi
+negative_words = ["yapılmaz", "uygulanmaz", "açılamaz",
+                  "faydalandırılmaz", "yararlanılamaz", "sayılmaz", "ayrılmaz",
+                  "olamaz","alınmaz","aranmaz"]
+
+# PDF dosyası okuma ve yazma
+pdf_file = open("7440_Yapilandirma_Rehberi.pdf", "rb")
+pdf_reader = PyPDF2.PdfReader(pdf_file)
+pdf_writer = PyPDF2.PdfFileWriter()
+
+# PDF dosyasındaki her sayfada işlem yapma
+for page in pdf_reader.pages:
+    # Sayfa metnini çıkarma
+    text = page.extract_text()
+
+    # Metni cümlelere ayırma ve her cümle için olumsuz kelimeleri arama
+    sentences = nltk.sent_tokenize(text)
+    for sentence in sentences:
+        for word in negative_words:
+            # Olumsuz kelimeyi arama ve vurgulama
+            if re.search(r'\b{}\b'.format(word), sentence, re.IGNORECASE):
+                sentence = sentence.replace(word, f"\033[1;31m{word}\033[0m")
+
+        # Vurgulanmış cümleyi PDF dosyasına ekleme
+        page_obj = PyPDF2.pdf.PageObject.createTextObject(None, sentence)
+        pdf_writer.addPage(page_obj)
+
+# Yeni PDF dosyasını kaydetme
+pdf_output = open("vurgulanmis-dosyaadi.pdf", "wb")
+pdf_writer.write(pdf_output)
+
+# Kapatma işlemleri
+pdf_file.close()
+pdf_output.close()
+
